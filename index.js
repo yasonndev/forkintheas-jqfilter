@@ -2,9 +2,13 @@
     $.fn.entityFilter = function(options) {
         const settings = $.extend({
             dataSource: [],
-            initialSelected: [], // can be an user object array and array of values
-            placeholder: 'Введіть декілька букв для пошуку',
+            initialSelected: [], // Может быть массивом ID или объектов
+            placeholder: 'Abr abr igval',
             maxSuggestions: 5,
+            mapping: {
+                id: 'id',
+                name: 'name'
+            },
             onSelect: null,
             onRemove: null,
             onChange: null,
@@ -13,14 +17,14 @@
         return this.each(function() {
             const $container = $(this);
             let selectedEntities = [];
+            const mapping = settings.mapping;
 
             // init it
             if (Array.isArray(settings.initialSelected)) {
                 if (settings.initialSelected.length > 0) {
                     if (typeof settings.initialSelected[0] === 'number') {
-                        // filter and mutation into objects
                         selectedEntities = settings.initialSelected
-                            .map(id => settings.dataSource.find(item => item.user_id === id))
+                            .map(id => settings.dataSource.find(item => item[mapping.id] === id))
                             .filter(item => !!item);
                     } else {
                         selectedEntities = [...settings.initialSelected];
@@ -60,7 +64,7 @@
 
             // Добавляем метод для получения выбранных ID
             $container.data('getSelectedIds', () =>
-                selectedEntities.map(item => item.id)
+                selectedEntities.map(item => item[mapping.id])
             );
 
             // Update selected entities display
@@ -69,7 +73,7 @@
                 selectedEntities.forEach(entity => {
                     const $entity = $('<div>')
                         .addClass('selected-entity')
-                        .html('<div>' + entity.user_login + '</div>')
+                        .html('<div>' + entity[mapping.name] + '</div>')
                         .append($('<div class="remove">'
                             + '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">'
                             + '<path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>'
@@ -77,7 +81,7 @@
                             + '</div>'));
 
                     $entity.find('.remove').click(() => {
-                        selectedEntities = selectedEntities.filter(e => e.user_id !== entity.user_id);
+                        selectedEntities = selectedEntities.filter(e => e[mapping.id] !== entity[mapping.id]);
                         updateSelected();
                     });
 
@@ -95,9 +99,9 @@
                         .addClass('suggestion-item')
                         .html('<div class="icon">'
                             + '</div>'
-                            + '<div class="caption">' + entity.user_login + '</div>')
+                            + '<div class="caption">' + entity[mapping.name] + '</div>')
                         .click(() => {
-                            if (!selectedEntities.find(e => e.user_id === entity.user_id)) {
+                            if (!selectedEntities.find(e => e[mapping.id] === entity[mapping.id])) {
                                 selectedEntities.push(entity);
                                 updateSelected();
                                 if (settings.onSelect) settings.onSelect(entity);
@@ -139,7 +143,11 @@ $(document).ready(function() {
     $('#filter-box').entityFilter({
         dataSource: controllers,
         initialSelected: [5625, 745, 2059, 1437, 1547],
-        placeholder: 'Введіть декілька букв для пошуку',
+        placeholder: 'enter here',
+        mapping: {
+            id: 'user_id',
+            name: 'user_login'
+        },
         maxSuggestions: 21,
         onSelect: function(selected) {
             // console.table('Selected:', selected);
@@ -148,9 +156,10 @@ $(document).ready(function() {
             // console.table('Rmoved:', removed);
         },
         onChange: function(selected) {
+
             selected_ids = selected.map(item => item.user_id);
+
             console.log(selected_ids);
         }
     });
 });
-
